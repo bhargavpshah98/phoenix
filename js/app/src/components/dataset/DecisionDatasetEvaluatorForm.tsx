@@ -43,6 +43,7 @@ import {
 import { DecisionPromptEditor } from "@phoenix/pages/playground/DecisionPromptEditor";
 import {
   createDecisionQuestion,
+  createDecisionStateDraft,
   extractDecisionVariables,
 } from "@phoenix/pages/playground/decisionUtils";
 import { DecisionVersionSelector } from "@phoenix/pages/playground/DecisionVersionSelector";
@@ -78,8 +79,7 @@ type Props = {
 
 function createDatasetDecisionDraft(): DecisionPromptDraft {
   return {
-    state: "{{output}}",
-    stateEditorMode: "text",
+    state: createDecisionStateDraft({ template: "{{output}}" }),
     questions: [
       createDecisionQuestion({
         type: "predicate",
