@@ -860,7 +860,9 @@
                   "enum": [
                     "LLM",
                     "CODE",
-                    "HUMAN"
+                    "HUMAN",
+                    "DECISION",
+                    "AGENT"
                   ],
                   "type": "string"
                 },
@@ -1209,7 +1211,9 @@
                   "enum": [
                     "LLM",
                     "CODE",
-                    "HUMAN"
+                    "HUMAN",
+                    "DECISION",
+                    "AGENT"
                   ],
                   "type": "string"
                 },
@@ -1558,7 +1562,9 @@
                   "enum": [
                     "LLM",
                     "CODE",
-                    "HUMAN"
+                    "HUMAN",
+                    "DECISION",
+                    "AGENT"
                   ],
                   "type": "string"
                 },
@@ -19216,7 +19222,9 @@
             "enum": [
               "LLM",
               "CODE",
-              "HUMAN"
+              "HUMAN",
+              "DECISION",
+              "AGENT"
             ],
             "title": "Annotator Kind",
             "description": "The kind of annotator used for the annotation"
@@ -19282,7 +19290,9 @@
             "enum": [
               "LLM",
               "CODE",
-              "HUMAN"
+              "HUMAN",
+              "DECISION",
+              "AGENT"
             ],
             "title": "Annotator Kind",
             "description": "The kind of annotator used for the annotation"
@@ -19923,7 +19933,9 @@
             "enum": [
               "LLM",
               "CODE",
-              "HUMAN"
+              "HUMAN",
+              "DECISION",
+              "AGENT"
             ],
             "title": "Annotator Kind",
             "description": "The kind of annotator used for the annotation"
@@ -19989,7 +20001,9 @@
             "enum": [
               "LLM",
               "CODE",
-              "HUMAN"
+              "HUMAN",
+              "DECISION",
+              "AGENT"
             ],
             "title": "Annotator Kind",
             "description": "The kind of annotator used for the annotation"
@@ -20104,7 +20118,9 @@
             "enum": [
               "LLM",
               "CODE",
-              "HUMAN"
+              "HUMAN",
+              "DECISION",
+              "AGENT"
             ],
             "title": "Annotator Kind",
             "description": "The kind of annotator used for the annotation"
@@ -21063,7 +21079,9 @@
             "enum": [
               "LLM",
               "CODE",
-              "HUMAN"
+              "HUMAN",
+              "DECISION",
+              "AGENT"
             ],
             "title": "Annotator Kind",
             "description": "The kind of annotator used for the annotation"
@@ -21129,7 +21147,9 @@
             "enum": [
               "LLM",
               "CODE",
-              "HUMAN"
+              "HUMAN",
+              "DECISION",
+              "AGENT"
             ],
             "title": "Annotator Kind",
             "description": "The kind of annotator used for the annotation"
@@ -21894,7 +21914,9 @@
             "enum": [
               "LLM",
               "CODE",
-              "HUMAN"
+              "HUMAN",
+              "DECISION",
+              "AGENT"
             ],
             "title": "Annotator Kind",
             "description": "The kind of annotator used for the evaluation"
