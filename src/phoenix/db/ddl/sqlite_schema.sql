@@ -1318,31 +1318,6 @@ CREATE INDEX ix_decision_versions_decision_id ON decision_versions (decision_id)
 CREATE INDEX ix_decision_versions_user_id ON decision_versions (user_id);
 
 
--- Table: decision_evaluators
--- --------------------------
-CREATE TABLE decision_evaluators (
-    id INTEGER NOT NULL,
-    kind VARCHAR DEFAULT 'DECISION' NOT NULL
-        CONSTRAINT "ck_decision_evaluators_`valid_evaluator_kind`"
-        CHECK (kind = 'DECISION'),
-    decision_version_id INTEGER NOT NULL,
-    scoring_policy JSONB NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    CONSTRAINT pk_decision_evaluators PRIMARY KEY (id),
-    CONSTRAINT fk_decision_evaluators_decision_version_id_decision_versions
-        FOREIGN KEY (decision_version_id)
-        REFERENCES decision_versions (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_decision_evaluators_kind_evaluators
-        FOREIGN KEY (kind, id)
-        REFERENCES evaluators (kind, id)
-        ON DELETE CASCADE
-);
-
-CREATE INDEX ix_decision_evaluators_decision_version_id ON decision_evaluators
-    (decision_version_id);
-
-
 -- Table: decision_version_tags
 -- ----------------------------
 CREATE TABLE decision_version_tags (
@@ -1373,6 +1348,37 @@ CREATE INDEX ix_decision_version_tags_decision_id ON decision_version_tags
 CREATE INDEX ix_decision_version_tags_decision_version_id ON decision_version_tags
     (decision_version_id);
 CREATE INDEX ix_decision_version_tags_user_id ON decision_version_tags (user_id);
+
+
+-- Table: decision_evaluators
+-- --------------------------
+CREATE TABLE decision_evaluators (
+    id INTEGER NOT NULL,
+    kind VARCHAR DEFAULT 'DECISION' NOT NULL
+        CONSTRAINT "ck_decision_evaluators_`valid_evaluator_kind`"
+        CHECK (kind = 'DECISION'),
+    decision_id INTEGER NOT NULL,
+    decision_version_tag_id INTEGER,
+    scoring_policy JSONB NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT pk_decision_evaluators PRIMARY KEY (id),
+    CONSTRAINT fk_decision_evaluators_decision_id_decisions
+        FOREIGN KEY (decision_id)
+        REFERENCES decisions (id)
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_decision_evaluators_decision_version_tag_id_decision_version_tags
+        FOREIGN KEY (decision_version_tag_id)
+        REFERENCES decision_version_tags (id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_decision_evaluators_kind_evaluators
+        FOREIGN KEY (kind, id)
+        REFERENCES evaluators (kind, id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX ix_decision_evaluators_decision_id ON decision_evaluators (decision_id);
+CREATE INDEX ix_decision_evaluators_decision_version_tag_id ON decision_evaluators
+    (decision_version_tag_id);
 
 
 -- Table: experiment_decision_tasks
@@ -1855,13 +1861,15 @@ CREATE INDEX ix_prompt_version_tags_user_id ON prompt_version_tags (user_id);
 -- ---------------------
 CREATE TABLE llm_evaluators (
     id INTEGER NOT NULL,
-    kind VARCHAR DEFAULT 'LLM' NOT NULL,
+    kind VARCHAR DEFAULT 'LLM' NOT NULL
+        CONSTRAINT "ck_llm_evaluators_`valid_evaluator_kind`"
+        CHECK (kind = 'LLM'),
     prompt_id INTEGER NOT NULL,
     prompt_version_tag_id INTEGER,
     output_configs JSONB NOT NULL,
-    updated_at TIMESTAMP DEFAULT (CURRENT_TIMESTAMP) NOT NULL,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    input_schema JSONB,
     CONSTRAINT pk_llm_evaluators PRIMARY KEY (id),
-    CONSTRAINT "ck_llm_evaluators_`valid_evaluator_kind`" CHECK (kind = 'LLM'),
     CONSTRAINT fk_llm_evaluators_kind_evaluators
         FOREIGN KEY (kind, id)
         REFERENCES evaluators (kind, id)
@@ -1873,7 +1881,7 @@ CREATE TABLE llm_evaluators (
     CONSTRAINT fk_llm_evaluators_prompt_version_tag_id_prompt_version_tags
         FOREIGN KEY (prompt_version_tag_id)
         REFERENCES prompt_version_tags (id)
-        ON DELETE RESTRICT
+        ON DELETE SET NULL
 );
 
 CREATE INDEX ix_llm_evaluators_prompt_id ON llm_evaluators (prompt_id);
@@ -1997,6 +2005,7 @@ CREATE TABLE code_evaluators (
     input_mapping JSONB DEFAULT '{"literal_mapping": {}, "path_mapping": {}}' NOT NULL,
     output_configs JSONB DEFAULT '[]' NOT NULL,
     sandbox_config_id INTEGER,
+    input_schema JSONB,
     CONSTRAINT pk_code_evaluators PRIMARY KEY (id),
     CONSTRAINT "ck_code_evaluators_`valid_evaluator_kind`" CHECK (kind = 'CODE'),
     CONSTRAINT fk_code_evaluators_kind_evaluators

@@ -284,6 +284,11 @@ class DatasetWithExampleCount(TypedDict):
     example_count: int
 
 
+class DecisionVersionSelector(TypedDict):
+    type: Literal["version"]
+    decision_version_id: str
+
+
 class DeleteSessionsRequestBody(TypedDict):
     session_identifiers: Sequence[str]
 
@@ -400,6 +405,10 @@ class LDAPUser(LDAPUserData):
     id: str
     created_at: str
     updated_at: str
+
+
+class LatestDecisionVersionSelector(TypedDict):
+    type: Literal["latest"]
 
 
 class LatestPromptVersionSelector(TypedDict):
@@ -1726,6 +1735,16 @@ class DatasetExample(TypedDict):
     source: NotRequired[DatasetExampleSource]
 
 
+class DecisionEvaluatorDecision(TypedDict):
+    decision_id: str
+    selector: Union[DecisionVersionSelector, LatestDecisionVersionSelector]
+    resolved_decision_version_id: str
+
+
+class DecisionEvaluatorDecisionInput(TypedDict):
+    selector: DecisionVersionSelector
+
+
 class DecisionScoringPolicy(TypedDict):
     questions: NotRequired[Mapping[str, Union[PredicateScoring, ChoiceScoring, ScaleScoring]]]
 
@@ -1906,6 +1925,7 @@ class PatchCodeEvaluatorRequest(TypedDict):
             ]
         ]
     ]
+    input_schema: NotRequired[Mapping[str, Any]]
 
 
 class PatchDatasetEvaluatorRequest(TypedDict):
@@ -1926,7 +1946,7 @@ class PatchDatasetEvaluatorRequest(TypedDict):
 class PatchDecisionEvaluatorRequest(TypedDict):
     type: Literal["decision"]
     name: NotRequired[str]
-    decision_version_id: NotRequired[str]
+    decision: NotRequired[DecisionEvaluatorDecisionInput]
     description: NotRequired[str]
     scoring_policy: NotRequired[DecisionScoringPolicy]
 
@@ -1937,6 +1957,7 @@ class PatchLLMEvaluatorRequest(TypedDict):
     description: NotRequired[str]
     prompt: NotRequired[LLMEvaluatorPromptInput]
     output_configs: NotRequired[Sequence[CategoricalAnnotationConfigData]]
+    input_schema: NotRequired[Mapping[str, Any]]
 
 
 class PatchPromptResponseBody(TypedDict):
@@ -2218,7 +2239,6 @@ class ProblemDetail(TypedDict):
     existing_id: NotRequired[str]
     current_version_id: NotRequired[str]
     binding_counts: NotRequired[BindingCounts]
-    dataset_evaluator_ids: NotRequired[Sequence[str]]
 
 
 class TranscriptPersistedChunk(TypedDict):
@@ -2285,6 +2305,7 @@ class CodeEvaluatorDefinition(TypedDict):
     ]
     current_version_id: Optional[str]
     source_code: Optional[str]
+    input_schema: Optional[Mapping[str, Any]]
 
 
 class CodeEvaluatorVersionRequest(TypedDict):
@@ -2302,6 +2323,7 @@ class CodeEvaluatorVersionRequest(TypedDict):
             ]
         ]
     ]
+    input_schema: NotRequired[Mapping[str, Any]]
 
 
 class CompactAgentSessionRequestBody(TypedDict):
@@ -2333,6 +2355,7 @@ class CreateCodeEvaluatorRequest(TypedDict):
         ]
     ]
     description: NotRequired[str]
+    input_schema: NotRequired[Mapping[str, Any]]
 
 
 class CreateDatasetEvaluatorRequest(TypedDict):
@@ -2354,7 +2377,7 @@ class CreateDatasetEvaluatorRequest(TypedDict):
 class CreateDecisionEvaluatorRequest(TypedDict):
     type: Literal["decision"]
     name: str
-    decision_version_id: str
+    decision: DecisionEvaluatorDecisionInput
     description: NotRequired[str]
     scoring_policy: NotRequired[DecisionScoringPolicy]
 
@@ -2365,6 +2388,7 @@ class CreateLLMEvaluatorRequest(TypedDict):
     prompt: LLMEvaluatorPromptInput
     output_configs: Sequence[CategoricalAnnotationConfigData]
     description: NotRequired[str]
+    input_schema: NotRequired[Mapping[str, Any]]
 
 
 class CreateSpansRequestBody(TypedDict):
@@ -2405,8 +2429,7 @@ class DecisionEvaluatorDefinition(TypedDict):
     id: str
     name: str
     description: Optional[str]
-    decision_id: str
-    decision_version_id: str
+    decision: DecisionEvaluatorDecision
     scoring_policy: DecisionScoringPolicy
     output_configs: Sequence[
         Union[
@@ -2456,6 +2479,7 @@ class LLMEvaluatorDefinition(TypedDict):
     description: Optional[str]
     prompt: LLMEvaluatorPrompt
     output_configs: Sequence[CategoricalAnnotationConfigData]
+    input_schema: Optional[Mapping[str, Any]]
 
 
 class LegacyAssistantMetadataUIMessage(TypedDict):

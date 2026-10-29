@@ -1409,30 +1409,6 @@ CREATE INDEX ix_decision_versions_user_id ON public.decision_versions
     USING btree (user_id);
 
 
--- Table: decision_evaluators
--- --------------------------
-CREATE TABLE public.decision_evaluators (
-    id BIGINT NOT NULL,
-    kind VARCHAR NOT NULL DEFAULT 'DECISION'::character varying,
-    decision_version_id BIGINT NOT NULL,
-    scoring_policy JSONB NOT NULL,
-    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
-    CONSTRAINT pk_decision_evaluators PRIMARY KEY (id),
-    CONSTRAINT "ck_decision_evaluators_`valid_evaluator_kind`" CHECK (((kind)::text = 'DECISION'::text)),
-    CONSTRAINT fk_decision_evaluators_decision_version_id_decision_versions
-        FOREIGN KEY (decision_version_id)
-        REFERENCES public.decision_versions (id)
-        ON DELETE RESTRICT,
-    CONSTRAINT fk_decision_evaluators_kind_evaluators
-        FOREIGN KEY (kind, id)
-        REFERENCES public.evaluators (kind, id)
-        ON DELETE CASCADE
-);
-
-CREATE INDEX ix_decision_evaluators_decision_version_id ON public.decision_evaluators
-    USING btree (decision_version_id);
-
-
 -- Table: decision_version_tags
 -- ----------------------------
 CREATE TABLE public.decision_version_tags (
@@ -1465,6 +1441,37 @@ CREATE INDEX ix_decision_version_tags_decision_version_id ON public.decision_ver
     USING btree (decision_version_id);
 CREATE INDEX ix_decision_version_tags_user_id ON public.decision_version_tags
     USING btree (user_id);
+
+
+-- Table: decision_evaluators
+-- --------------------------
+CREATE TABLE public.decision_evaluators (
+    id BIGINT NOT NULL,
+    kind VARCHAR NOT NULL DEFAULT 'DECISION'::character varying,
+    decision_id BIGINT NOT NULL,
+    decision_version_tag_id BIGINT,
+    scoring_policy JSONB NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    CONSTRAINT pk_decision_evaluators PRIMARY KEY (id),
+    CONSTRAINT "ck_decision_evaluators_`valid_evaluator_kind`" CHECK (((kind)::text = 'DECISION'::text)),
+    CONSTRAINT fk_decision_evaluators_decision_id_decisions
+        FOREIGN KEY (decision_id)
+        REFERENCES public.decisions (id)
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_decision_evaluators_decision_version_tag_id_decision_f23e
+        FOREIGN KEY (decision_version_tag_id)
+        REFERENCES public.decision_version_tags (id)
+        ON DELETE SET NULL,
+    CONSTRAINT fk_decision_evaluators_kind_evaluators
+        FOREIGN KEY (kind, id)
+        REFERENCES public.evaluators (kind, id)
+        ON DELETE CASCADE
+);
+
+CREATE INDEX ix_decision_evaluators_decision_id ON public.decision_evaluators
+    USING btree (decision_id);
+CREATE INDEX ix_decision_evaluators_decision_version_tag_id ON public.decision_evaluators
+    USING btree (decision_version_tag_id);
 
 
 -- Table: experiment_decision_tasks
@@ -1970,6 +1977,7 @@ CREATE TABLE public.llm_evaluators (
     prompt_version_tag_id BIGINT,
     output_configs JSONB NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+    input_schema JSONB,
     CONSTRAINT pk_llm_evaluators PRIMARY KEY (id),
     CONSTRAINT "ck_llm_evaluators_`valid_evaluator_kind`" CHECK (((kind)::text = 'LLM'::text)),
     CONSTRAINT fk_llm_evaluators_kind_evaluators
@@ -1983,7 +1991,7 @@ CREATE TABLE public.llm_evaluators (
     CONSTRAINT fk_llm_evaluators_prompt_version_tag_id_prompt_version_tags
         FOREIGN KEY (prompt_version_tag_id)
         REFERENCES public.prompt_version_tags (id)
-        ON DELETE RESTRICT
+        ON DELETE SET NULL
 );
 
 CREATE INDEX ix_llm_evaluators_prompt_id ON public.llm_evaluators
@@ -2119,6 +2127,7 @@ CREATE TABLE public.code_evaluators (
     input_mapping JSONB NOT NULL DEFAULT '{"path_mapping": {}, "literal_mapping": {}}',
     output_configs JSONB NOT NULL DEFAULT '[]'::jsonb,
     sandbox_config_id BIGINT,
+    input_schema JSONB,
     CONSTRAINT pk_code_evaluators PRIMARY KEY (id),
     CONSTRAINT "ck_code_evaluators_`valid_evaluator_kind`" CHECK (((kind)::text = 'CODE'::text)),
     CONSTRAINT fk_code_evaluators_kind_evaluators

@@ -590,8 +590,7 @@ export interface paths {
          * @description Edit a definition; the change applies to every binding that references it.
          *
          *     Omitted fields keep their values. Code is appended through the versions endpoint and
-         *     prompt content through the prompts API; this route only moves pointers to them. An LLM
-         *     change that would invalidate a dataset binding's overrides is refused with 409.
+         *     prompt content through the prompts API; this route only moves pointers to them.
          */
         patch: operations["patchEvaluator"];
         trace?: never;
@@ -1353,7 +1352,7 @@ export interface paths {
         put?: never;
         /**
          * Add tag to prompt version
-         * @description Add a new tag to a specific prompt version. Tags help identify and categorize different versions of a prompt. A tag through which an LLM evaluator records its prompt version can only move to a version that evaluator can run.
+         * @description Add a new tag to a specific prompt version. Tags help identify and categorize different versions of a prompt.
          */
         post: operations["createPromptVersionTag"];
         delete?: never;
@@ -1374,7 +1373,7 @@ export interface paths {
         post?: never;
         /**
          * Delete a tag from a prompt version
-         * @description Delete a tag from a specific prompt version by tag name. The tag is resolved within the scope of the prompt linked to the version. A tag through which an LLM evaluator records its prompt version cannot be deleted.
+         * @description Delete a tag from a specific prompt version by tag name. The tag is resolved within the scope of the prompt linked to the version.
          */
         delete: operations["deletePromptVersionTag"];
         options?: never;
@@ -2794,6 +2793,13 @@ export interface components {
             current_version_id: string | null;
             /** Source Code */
             source_code: string | null;
+            /**
+             * Input Schema
+             * @description The parameters of the current version's evaluate function, with a description on each the author described. Null without a version.
+             */
+            input_schema: {
+                [key: string]: unknown;
+            } | null;
         };
         /** CodeEvaluatorUIContext */
         CodeEvaluatorUIContext: {
@@ -2845,6 +2851,13 @@ export interface components {
              * @description Outputs the new code produces. Omit to keep.
              */
             output_configs?: (components["schemas"]["CategoricalAnnotationConfigData"] | components["schemas"]["ContinuousAnnotationConfigData"] | components["schemas"]["FreeformAnnotationConfigData"])[];
+            /**
+             * Input Schema
+             * @description Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422. Omit to keep the stored descriptions of the parameters the new code still declares; null clears them.
+             */
+            input_schema?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** CodeEvaluatorVersionsResponseBody */
         CodeEvaluatorVersionsResponseBody: {
@@ -3024,6 +3037,13 @@ export interface components {
              * @description Outputs the code produces.
              */
             output_configs: (components["schemas"]["CategoricalAnnotationConfigData"] | components["schemas"]["ContinuousAnnotationConfigData"] | components["schemas"]["FreeformAnnotationConfigData"])[];
+            /**
+             * Input Schema
+             * @description Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422.
+             */
+            input_schema?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** CreateDatasetEvaluatorRequest */
         CreateDatasetEvaluatorRequest: {
@@ -3110,8 +3130,8 @@ export interface components {
              */
             type: "decision";
             name: components["schemas"]["Identifier"];
-            /** Decision Version Id */
-            decision_version_id: string;
+            /** @description The decision version to run. */
+            decision: components["schemas"]["DecisionEvaluatorDecisionInput"];
             /** Description */
             description?: string | null;
             scoring_policy?: components["schemas"]["DecisionScoringPolicy"];
@@ -3229,6 +3249,13 @@ export interface components {
             prompt: components["schemas"]["LLMEvaluatorPromptInput"];
             /** Output Configs */
             output_configs: components["schemas"]["CategoricalAnnotationConfigData"][];
+            /**
+             * Input Schema
+             * @description Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422.
+             */
+            input_schema?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** CreateProjectEvaluatorRequest */
         CreateProjectEvaluatorRequest: {
@@ -3654,6 +3681,29 @@ export interface components {
             /** Example Count */
             example_count: number;
         };
+        /** DecisionEvaluatorDecision */
+        DecisionEvaluatorDecision: {
+            /**
+             * Decision Id
+             * @description GlobalID of the decision whose version the evaluator runs.
+             */
+            decision_id: string;
+            /**
+             * Selector
+             * @description How the version is chosen. version: pinned to one version. latest: the decision's newest version, for evaluators whose pin was removed; writes accept version only. Treat an unrecognized type as not pinned.
+             */
+            selector: components["schemas"]["DecisionVersionSelector"] | components["schemas"]["LatestDecisionVersionSelector"];
+            /**
+             * Resolved Decision Version Id
+             * @description GlobalID of the version the evaluator runs now.
+             */
+            resolved_decision_version_id: string;
+        };
+        /** DecisionEvaluatorDecisionInput */
+        DecisionEvaluatorDecisionInput: {
+            /** @description Which decision version to run. */
+            selector: components["schemas"]["DecisionVersionSelector"];
+        };
         /** DecisionEvaluatorDefinition */
         DecisionEvaluatorDefinition: {
             /**
@@ -3666,10 +3716,7 @@ export interface components {
             name: components["schemas"]["Identifier"];
             /** Description */
             description: string | null;
-            /** Decision Id */
-            decision_id: string;
-            /** Decision Version Id */
-            decision_version_id: string;
+            decision: components["schemas"]["DecisionEvaluatorDecision"];
             scoring_policy: components["schemas"]["DecisionScoringPolicy"];
             /** Output Configs */
             output_configs: (components["schemas"]["CategoricalAnnotationConfigData"] | components["schemas"]["ContinuousAnnotationConfigData"] | components["schemas"]["FreeformAnnotationConfigData"])[];
@@ -3683,6 +3730,19 @@ export interface components {
             questions?: {
                 [key: string]: components["schemas"]["PredicateScoring"] | components["schemas"]["ChoiceScoring"] | components["schemas"]["ScaleScoring"];
             };
+        };
+        /** DecisionVersionSelector */
+        DecisionVersionSelector: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "version";
+            /**
+             * Decision Version Id
+             * @description GlobalID of the decision version the evaluator runs. An update must name a version of the evaluator's own decision.
+             */
+            decision_version_id: string;
         };
         /** DeleteAnnotationConfigResponseBody */
         DeleteAnnotationConfigResponseBody: {
@@ -4384,6 +4444,13 @@ export interface components {
             prompt: components["schemas"]["LLMEvaluatorPrompt"];
             /** Output Configs */
             output_configs: components["schemas"]["CategoricalAnnotationConfigData"][];
+            /**
+             * Input Schema
+             * @description The variables of the prompt version the evaluator runs, with a description on each the author described. Null when that version cannot be resolved or its template cannot be parsed.
+             */
+            input_schema: {
+                [key: string]: unknown;
+            } | null;
         };
         /** LLMEvaluatorPrompt */
         LLMEvaluatorPrompt: {
@@ -4410,6 +4477,14 @@ export interface components {
         };
         /** @enum {string} */
         LanguageName: "PYTHON" | "TYPESCRIPT";
+        /** LatestDecisionVersionSelector */
+        LatestDecisionVersionSelector: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "latest";
+        };
         /** LatestPromptVersionSelector */
         LatestPromptVersionSelector: {
             /**
@@ -5004,6 +5079,13 @@ export interface components {
             input_mapping?: components["schemas"]["InputMapping"];
             /** Output Configs */
             output_configs?: (components["schemas"]["CategoricalAnnotationConfigData"] | components["schemas"]["ContinuousAnnotationConfigData"] | components["schemas"]["FreeformAnnotationConfigData"])[];
+            /**
+             * Input Schema
+             * @description Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422. Omit to keep the stored descriptions of the inputs still declared; null clears them.
+             */
+            input_schema?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** PatchDatasetEvaluatorRequest */
         PatchDatasetEvaluatorRequest: {
@@ -5028,8 +5110,8 @@ export interface components {
              */
             type: "decision";
             name?: components["schemas"]["Identifier"];
-            /** Decision Version Id */
-            decision_version_id?: string;
+            /** @description Move the evaluator to another version of its decision. Omit to keep it. */
+            decision?: components["schemas"]["DecisionEvaluatorDecisionInput"];
             /** Description */
             description?: string | null;
             scoring_policy?: components["schemas"]["DecisionScoringPolicy"];
@@ -5051,6 +5133,13 @@ export interface components {
             prompt?: components["schemas"]["LLMEvaluatorPromptInput"];
             /** Output Configs */
             output_configs?: components["schemas"]["CategoricalAnnotationConfigData"][];
+            /**
+             * Input Schema
+             * @description Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422. Omit to keep the stored descriptions of the inputs still declared; null clears them.
+             */
+            input_schema?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** PatchProjectEvaluatorRequest */
         PatchProjectEvaluatorRequest: {
@@ -8331,12 +8420,6 @@ export interface components {
              * @default null
              */
             binding_counts?: components["schemas"]["BindingCounts"] | null;
-            /**
-             * Dataset Evaluator Ids
-             * @description For incompatible_override: GlobalIDs of the dataset bindings whose output overrides no longer fit the evaluator's prompt.
-             * @default null
-             */
-            dataset_evaluator_ids?: string[] | null;
         };
         /** ProblemFieldError */
         ProblemFieldError: {
@@ -13234,15 +13317,6 @@ export interface operations {
                     "text/plain": string;
                 };
             };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/plain": string;
-                };
-            };
             /** @description Unprocessable Entity */
             422: {
                 headers: {
@@ -13502,15 +13576,6 @@ export interface operations {
                     "text/plain": string;
                 };
             };
-            /** @description Conflict */
-            409: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/plain": string;
-                };
-            };
             /** @description Unprocessable Entity */
             422: {
                 headers: {
@@ -13554,15 +13619,6 @@ export interface operations {
             };
             /** @description Not Found */
             404: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "text/plain": string;
-                };
-            };
-            /** @description Conflict */
-            409: {
                 headers: {
                     [name: string]: unknown;
                 };

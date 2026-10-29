@@ -3831,7 +3831,7 @@
           "evaluators"
         ],
         "summary": "Patch Evaluator",
-        "description": "Edit a definition; the change applies to every binding that references it.\n\nOmitted fields keep their values. Code is appended through the versions endpoint and\nprompt content through the prompts API; this route only moves pointers to them. An LLM\nchange that would invalidate a dataset binding's overrides is refused with 409.",
+        "description": "Edit a definition; the change applies to every binding that references it.\n\nOmitted fields keep their values. Code is appended through the versions endpoint and\nprompt content through the prompts API; this route only moves pointers to them.",
         "operationId": "patchEvaluator",
         "parameters": [
           {
@@ -8078,16 +8078,6 @@
             },
             "description": "Not Found"
           },
-          "409": {
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": "Conflict"
-          },
           "422": {
             "content": {
               "text/plain": {
@@ -8407,7 +8397,7 @@
           "prompts"
         ],
         "summary": "Add tag to prompt version",
-        "description": "Add a new tag to a specific prompt version. Tags help identify and categorize different versions of a prompt. A tag through which an LLM evaluator records its prompt version can only move to a version that evaluator can run.",
+        "description": "Add a new tag to a specific prompt version. Tags help identify and categorize different versions of a prompt.",
         "operationId": "createPromptVersionTag",
         "parameters": [
           {
@@ -8456,16 +8446,6 @@
             },
             "description": "Not Found"
           },
-          "409": {
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": "Conflict"
-          },
           "422": {
             "content": {
               "text/plain": {
@@ -8485,7 +8465,7 @@
           "prompts"
         ],
         "summary": "Delete a tag from a prompt version",
-        "description": "Delete a tag from a specific prompt version by tag name. The tag is resolved within the scope of the prompt linked to the version. A tag through which an LLM evaluator records its prompt version cannot be deleted.",
+        "description": "Delete a tag from a specific prompt version by tag name. The tag is resolved within the scope of the prompt linked to the version.",
         "operationId": "deletePromptVersionTag",
         "parameters": [
           {
@@ -8534,16 +8514,6 @@
               }
             },
             "description": "Not Found"
-          },
-          "409": {
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": "Conflict"
           },
           "422": {
             "content": {
@@ -13412,6 +13382,19 @@
               }
             ],
             "title": "Source Code"
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Schema",
+            "description": "The parameters of the current version's evaluate function, with a description on each the author described. Null without a version."
           }
         },
         "type": "object",
@@ -13425,7 +13408,8 @@
           "input_mapping",
           "output_configs",
           "current_version_id",
-          "source_code"
+          "source_code",
+          "input_schema"
         ],
         "title": "CodeEvaluatorDefinition"
       },
@@ -13556,6 +13540,19 @@
             "minItems": 1,
             "title": "Output Configs",
             "description": "Outputs the new code produces. Omit to keep."
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Schema",
+            "description": "Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422. Omit to keep the stored descriptions of the parameters the new code still declares; null clears them."
           }
         },
         "additionalProperties": false,
@@ -14106,6 +14103,19 @@
             "minItems": 1,
             "title": "Output Configs",
             "description": "Outputs the code produces."
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Schema",
+            "description": "Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422."
           }
         },
         "additionalProperties": false,
@@ -14311,9 +14321,9 @@
           "name": {
             "$ref": "#/components/schemas/Identifier"
           },
-          "decision_version_id": {
-            "type": "string",
-            "title": "Decision Version Id"
+          "decision": {
+            "$ref": "#/components/schemas/DecisionEvaluatorDecisionInput",
+            "description": "The decision version to run."
           },
           "description": {
             "anyOf": [
@@ -14335,7 +14345,7 @@
         "required": [
           "type",
           "name",
-          "decision_version_id"
+          "decision"
         ],
         "title": "CreateDecisionEvaluatorRequest"
       },
@@ -14552,6 +14562,19 @@
             "type": "array",
             "minItems": 1,
             "title": "Output Configs"
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Schema",
+            "description": "Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422."
           }
         },
         "additionalProperties": false,
@@ -15616,6 +15639,60 @@
         ],
         "title": "DatasetWithExampleCount"
       },
+      "DecisionEvaluatorDecision": {
+        "properties": {
+          "decision_id": {
+            "type": "string",
+            "title": "Decision Id",
+            "description": "GlobalID of the decision whose version the evaluator runs."
+          },
+          "selector": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/DecisionVersionSelector"
+              },
+              {
+                "$ref": "#/components/schemas/LatestDecisionVersionSelector"
+              }
+            ],
+            "title": "Selector",
+            "description": "How the version is chosen. version: pinned to one version. latest: the decision's newest version, for evaluators whose pin was removed; writes accept version only. Treat an unrecognized type as not pinned.",
+            "discriminator": {
+              "propertyName": "type",
+              "mapping": {
+                "latest": "#/components/schemas/LatestDecisionVersionSelector",
+                "version": "#/components/schemas/DecisionVersionSelector"
+              }
+            }
+          },
+          "resolved_decision_version_id": {
+            "type": "string",
+            "title": "Resolved Decision Version Id",
+            "description": "GlobalID of the version the evaluator runs now."
+          }
+        },
+        "type": "object",
+        "required": [
+          "decision_id",
+          "selector",
+          "resolved_decision_version_id"
+        ],
+        "title": "DecisionEvaluatorDecision"
+      },
+      "DecisionEvaluatorDecisionInput": {
+        "properties": {
+          "selector": {
+            "$ref": "#/components/schemas/DecisionVersionSelector",
+            "description": "Which decision version to run."
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "selector"
+        ],
+        "title": "DecisionEvaluatorDecisionInput"
+      },
       "DecisionEvaluatorDefinition": {
         "properties": {
           "type": {
@@ -15641,13 +15718,8 @@
             ],
             "title": "Description"
           },
-          "decision_id": {
-            "type": "string",
-            "title": "Decision Id"
-          },
-          "decision_version_id": {
-            "type": "string",
-            "title": "Decision Version Id"
+          "decision": {
+            "$ref": "#/components/schemas/DecisionEvaluatorDecision"
           },
           "scoring_policy": {
             "$ref": "#/components/schemas/DecisionScoringPolicy"
@@ -15684,8 +15756,7 @@
           "id",
           "name",
           "description",
-          "decision_id",
-          "decision_version_id",
+          "decision",
           "scoring_policy",
           "output_configs"
         ],
@@ -15723,6 +15794,26 @@
         "type": "object",
         "title": "DecisionScoringPolicy",
         "description": "Question thresholds, choice scores, scale labels, and comparison direction."
+      },
+      "DecisionVersionSelector": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "version",
+            "title": "Type"
+          },
+          "decision_version_id": {
+            "type": "string",
+            "title": "Decision Version Id",
+            "description": "GlobalID of the decision version the evaluator runs. An update must name a version of the evaluator's own decision."
+          }
+        },
+        "type": "object",
+        "required": [
+          "type",
+          "decision_version_id"
+        ],
+        "title": "DecisionVersionSelector"
       },
       "DeleteAnnotationConfigResponseBody": {
         "properties": {
@@ -17597,6 +17688,19 @@
             },
             "type": "array",
             "title": "Output Configs"
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Schema",
+            "description": "The variables of the prompt version the evaluator runs, with a description on each the author described. Null when that version cannot be resolved or its template cannot be parsed."
           }
         },
         "type": "object",
@@ -17606,7 +17710,8 @@
           "name",
           "description",
           "prompt",
-          "output_configs"
+          "output_configs",
+          "input_schema"
         ],
         "title": "LLMEvaluatorDefinition"
       },
@@ -17677,6 +17782,20 @@
           "PYTHON",
           "TYPESCRIPT"
         ]
+      },
+      "LatestDecisionVersionSelector": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "latest",
+            "title": "Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "type"
+        ],
+        "title": "LatestDecisionVersionSelector"
       },
       "LatestPromptVersionSelector": {
         "properties": {
@@ -19205,6 +19324,19 @@
             "type": "array",
             "minItems": 1,
             "title": "Output Configs"
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Schema",
+            "description": "Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422. Omit to keep the stored descriptions of the inputs still declared; null clears them."
           }
         },
         "additionalProperties": false,
@@ -19285,9 +19417,9 @@
           "name": {
             "$ref": "#/components/schemas/Identifier"
           },
-          "decision_version_id": {
-            "type": "string",
-            "title": "Decision Version Id"
+          "decision": {
+            "$ref": "#/components/schemas/DecisionEvaluatorDecisionInput",
+            "description": "Move the evaluator to another version of its decision. Omit to keep it."
           },
           "description": {
             "anyOf": [
@@ -19345,6 +19477,19 @@
             "type": "array",
             "minItems": 1,
             "title": "Output Configs"
+          },
+          "input_schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Input Schema",
+            "description": "Describes the evaluator's inputs, in the shape input_schema is returned. Only each property's description is stored; the inputs themselves come from the prompt's variables or the code's parameters, and describing one they do not declare is refused with 422. Omit to keep the stored descriptions of the inputs still declared; null clears them."
           }
         },
         "additionalProperties": false,
@@ -27151,22 +27296,6 @@
             ],
             "default": null,
             "description": "For still_bound: how many project and dataset bindings still refuse the delete."
-          },
-          "dataset_evaluator_ids": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "default": null,
-            "description": "For incompatible_override: GlobalIDs of the dataset bindings whose output overrides no longer fit the evaluator's prompt.",
-            "title": "Dataset Evaluator Ids"
           }
         },
         "required": [
