@@ -79,7 +79,7 @@ type Props = {
 
 function createDatasetDecisionDraft(): DecisionPromptDraft {
   return {
-    state: createDecisionStateDraft({ template: "{{output}}" }),
+    state: createDecisionStateDraft({ text: "{{output}}" }),
     questions: [
       createDecisionQuestion({
         type: "predicate",
@@ -466,7 +466,7 @@ function DecisionDatasetEvaluatorFormContent({
               decisionName: initialEvaluator.decisionVersion.decision.name,
               versionId,
               tagName: null,
-              inputs: [],
+              variables: [],
               questions: [],
             });
           }}
