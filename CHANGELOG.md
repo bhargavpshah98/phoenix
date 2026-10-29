@@ -1,5 +1,12 @@
 # Changelog
 
+## [20.27.1](https://github.com/Arize-ai/phoenix/compare/arize-phoenix-v20.27.0...arize-phoenix-v20.27.1) (2026-10-29)
+
+
+### Documentation
+
+* show star-history rank and trending badges side by side in README ([#17421](https://github.com/Arize-ai/phoenix/issues/17421)) ([5c35d40](https://github.com/Arize-ai/phoenix/commit/5c35d40624816b029ded7f4f2fbd143df2528425))
+
 ## [20.27.0](https://github.com/Arize-ai/phoenix/compare/arize-phoenix-v20.26.1...arize-phoenix-v20.27.0) (2026-10-29)
 
 
