@@ -21,6 +21,7 @@ from phoenix.db.types.evaluators import InputMapping
 from phoenix.db.types.identifier import Identifier
 from phoenix.server.api.exceptions import BadRequest, Conflict, NotFound
 from phoenix.server.api.types.node import from_global_id_with_expected_type
+from phoenix.server.decisions.rendering import decision_variables
 from phoenix.server.decisions.validation import validate_decision_custom_provider
 from phoenix.server.evaluators.services.dataset_bindings import (
     DatasetEvaluatorWriteValues,
@@ -127,19 +128,20 @@ _QuestionSignature: TypeAlias = tuple[
 
 @dataclass(frozen=True)
 class _VersionSignature:
-    inputs: frozenset[str]
+    variables: frozenset[str]
     questions: frozenset[_QuestionSignature]
 
 
 def _signature(version: models.DecisionVersion) -> _VersionSignature:
-    """What a binding depends on: input names it maps, and the outputs it is scored by.
+    """What a binding depends on: variable names it maps, and the outputs it is scored by.
 
-    Order is not part of it: reordering inputs, questions, or choices changes no mapping or
-    annotation name. A scale's levels are ordered, because a level's index is its score.
-    Input JSON schemas are descriptive and are not enforced, so they are not part of it.
+    Order is not part of it: reordering variables, questions, or choices changes no mapping
+    or annotation name. A scale's levels are ordered, because a level's index is its score.
     """
     return _VersionSignature(
-        inputs=frozenset(input.name for input in version.inputs),
+        variables=frozenset(
+            decision_variables(version.template_format, version.state, version.questions)
+        ),
         questions=frozenset(
             (
                 question.name,
@@ -189,7 +191,7 @@ async def validate_bound_decision_update(
             if group
         ]
         raise Conflict(
-            f"Changing decision inputs, question names, types, choices, or scale levels "
+            f"Changing decision variables, question names, types, choices, or scale levels "
             f"would break {' and '.join(broken)}; detach them or create a new evaluator",
             reason="incompatible_override",
             dataset_evaluator_ids=[
